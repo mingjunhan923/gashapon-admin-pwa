@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1976d2">
+  <title>扭蛋机管理后台</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <!-- 登录页 -->
+  <div id="login-page" class="page">
+    <div class="login-box">
+      <div class="login-icon">🎰</div>
+      <h1>扭蛋机管理后台</h1>
+      <p>内部管理系统，请输入授权码</p>
+      <input type="password" id="auth-code" placeholder="输入授权码" maxlength="10">
+      <button onclick="login()">进入系统</button>
+      <div id="login-error" class="error"></div>
+    </div>
+  </div>
+
+  <!-- 主页面 -->
+  <div id="main-app" class="hidden">
+    <!-- 顶部栏 -->
+    <header class="app-header">
+      <h2 id="page-title">数据看板</h2>
+      <button class="icon-btn" onclick="logout()">退出</button>
+    </header>
+
+    <!-- 页面容器 -->
+    <main class="page-container">
+      <!-- 数据看板 -->
+      <div id="dashboard-page" class="page-content active">
+        <div class="dashboard-grid">
+          <div class="card stat-card">
+            <div class="stat-value" id="dash-sites">-</div>
+            <div class="stat-label">场地</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-value" id="dash-devices">-</div>
+            <div class="stat-label">设备</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-value" id="dash-products">-</div>
+            <div class="stat-label">商品</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-value" id="dash-slots">-</div>
+            <div class="stat-label">仓位</div>
+          </div>
+          <div class="card stat-card warning">
+            <div class="stat-value" id="dash-lowstock">-</div>
+            <div class="stat-label">库存预警</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-value" id="dash-warehouse">-</div>
+            <div class="stat-label">仓库库存</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>今日销售</h3>
+          <div class="big-number" id="dash-today-sales">¥0</div>
+          <div class="sub-info" id="dash-today-qty">0 颗</div>
+        </div>
+        <div class="card">
+          <h3>累计销售</h3>
+          <div class="big-number" id="dash-total-sales">¥0</div>
+        </div>
+      </div>
+
+      <!-- 库存管理 -->
+      <div id="inventory-page" class="page-content">
+        <div class="search-bar">
+          <input type="text" id="inv-search" placeholder="搜索场地/设备/商品" oninput="filterInventory()">
+        </div>
+        <div id="inventory-list" class="list-container"></div>
+      </div>
+
+      <!-- 销售记录 -->
+      <div id="sales-page" class="page-content">
+        <div class="filter-bar">
+          <input type="date" id="sales-date" onchange="loadSales()">
+          <button onclick="loadSales()">查询</button>
+        </div>
+        <div id="sales-list" class="list-container"></div>
+      </div>
+
+      <!-- 补货清单 -->
+      <div id="restock-page" class="page-content">
+        <div id="restock-list" class="list-container"></div>
+      </div>
+
+      <!-- 基础数据 -->
+      <div id="data-page" class="page-content">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchDataTab('sites')">场地</button>
+          <button class="tab-btn" onclick="switchDataTab('devices')">设备</button>
+          <button class="tab-btn" onclick="switchDataTab('products')">商品</button>
+        </div>
+        <div id="data-tab-sites" class="data-tab active">
+          <button class="btn-add" onclick="showAddModal('site')">+ 添加场地</button>
+          <div id="sites-list" class="list-container"></div>
+        </div>
+        <div id="data-tab-devices" class="data-tab">
+          <button class="btn-add" onclick="showAddModal('device')">+ 添加设备</button>
+          <div id="devices-list" class="list-container"></div>
+        </div>
+        <div id="data-tab-products" class="data-tab">
+          <button class="btn-add" onclick="showAddModal('product')">+ 添加商品</button>
+          <div id="products-list" class="list-container"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 底部导航 -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" onclick="navTo('dashboard')">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">看板</span>
+      </button>
+      <button class="nav-item" onclick="navTo('inventory')">
+        <span class="nav-icon">📦</span>
+        <span class="nav-label">库存</span>
+      </button>
+      <button class="nav-item" onclick="navTo('sales')">
+        <span class="nav-icon">💰</span>
+        <span class="nav-label">销售</span>
+      </button>
+      <button class="nav-item" onclick="navTo('restock')">
+        <span class="nav-icon">🚚</span>
+        <span class="nav-label">补货</span>
+      </button>
+      <button class="nav-item" onclick="navTo('data')">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">数据</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- 添加弹窗 -->
+  <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3 id="modal-title">添加</h3>
+      <div id="modal-body"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="hideModal()">取消</button>
+        <button class="btn-confirm" onclick="submitModal()">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
