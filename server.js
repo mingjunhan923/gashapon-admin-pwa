@@ -259,7 +259,13 @@ app.get('/api/restock', async (req, res) => {
   }
 });
 
-// ========== 启动 ==========
-app.listen(PORT, () => {
-  console.log(`扭蛋机管理后台已启动: http://localhost:${PORT}`);
-});
+// ========== 导出（Vercel）/ 启动（本地） ==========
+if (process.env.VERCEL) {
+  // Vercel Serverless 模式
+  module.exports = app;
+} else {
+  // 本地开发模式
+  app.listen(PORT, () => {
+    console.log(`扭蛋机管理后台已启动: http://localhost:${PORT}`);
+  });
+}
